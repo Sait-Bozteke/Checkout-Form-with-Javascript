@@ -1,63 +1,93 @@
-let plus = document.querySelectorAll(".fa-plus")
-let minus = document.querySelectorAll(".fa-minus")
-let product = document.querySelectorAll("#product-quantity")
+const taxRate = 0.18;
+const shippingPrice = 15.0;
 
-
-plus.forEach(e => {
-    let button = e.parentElement
-    button.addEventListener("click", () => {
-        let quantity = button.parentElement.children[1].innerHTML++
-        let productPrice = button.parentElement.parentElement.children[1].children[0].children[0].innerText
-        let _productTotal = (quantity + 1) * productPrice
-        button.parentElement.parentElement.children[4].innerHTML = _productTotal.toFixed(2)
-
-        buyDetail()
-    })
+window.addEventListener("load", ()=>{
+    localStorage.setItem("taxRate", taxRate);
+    localStorage.setItem("shippingPrice", shippingPrice);
+    sessionStorage.setItem("taxRate", taxRate);
+    sessionStorage.setItem("shippingPrice", shippingPrice);
+    calculateCartTotal()
 });
 
-minus.forEach(e => {
-    let button = e.parentElement
-    button.addEventListener("click", () => {
-        if (+(button.parentElement.children[1].innerHTML) > 1) {
-            let quantity = button.parentElement.children[1].innerHTML--
-            let productPrice = button.parentElement.parentElement.children[1].children[0].children[0].innerText
-            let _productTotal = (quantity - 1) * productPrice
-            button.parentElement.parentElement.children[4].innerHTML = _productTotal.toFixed(2)
-            buyDetail()
+//capturing
+let productsDiv = document.querySelector(".products");
+productsDiv.addEventListener("click", (e)=>{
+    let quantityP = e.target.parentElement.parentElement.querySelector("#product-quantity");
+    // console.log(quantityP);
+    // console.log(event.target);
+    //minus buttons
+    if (e.target.classList.contains("fa-minus") || e.target == quantityP.parentElement.firstElementChild) {
+        if (quantityP.innerText > 1) {
+            quantityP.innerText--;
+            //calculate Product and Cart Total
+            calculateProductTotal(quantityP);
         }
-    })
-});
+        else{
+            if(confirm("Product will be removed!")){
+                quantityP.parentElement.parentElement.parentElement.remove();
+                //calculateCartTotal
+                calculateCartTotal();
+            }
+        }
+        // console.log("minusBtn clicked");
+    }
 
-//function
-let buyDetail = () => {
-    let productTotal = document.querySelectorAll(".product-line-price")
-    const _subtotal = document.getElementById("cart-subtotal").children[1]
-    const _tax = document.getElementById("cart-tax").children[1]
-    const _total = document.getElementById("cart-total").children[1]
-    let _shipping = document.getElementById("cart-shipping").children[1]
+    //plus buttons
+    else if(e.target.className == "fas fa-plus" || e.target == quantityP.parentElement.lastElementChild){
+        quantityP.innerText++;
+         //calculate Product and Cart Total
+         calculateProductTotal(quantityP);
 
-    total = 0;
-    productTotal.forEach(e => {
-        total += Number(e.innerHTML)
-    })
+        // console.log("plusBtn clicked");
+    }
 
-    _subtotal.innerHTML = total.toFixed(2)
-    _tax.innerHTML = (total * 18 / 100).toFixed(2)
-    _shipping.innerHTML = "15.00"
-    _total.innerHTML = (Number(_subtotal.innerHTML) + Number(_tax.innerHTML) + Number(_shipping.innerHTML)).toFixed(2)
+    //remove buttons
+    else if(e.target.className == "remove-product"){
+        if (confirm("Product will be removed")) {
+            quantityP.parentElement.parentElement.parentElement.remove();
+            calculateCartTotal()
+        }
+        //calculateCartTotal
+
+        // e.target.parentElement.parentElement.remove();
+        // console.log("removeBtn clicked");
+
+    }
+    //others
+    else{
+        console.log("other elements clicked");
+    }
+})
+
+const calculateProductTotal = (quantityP) =>{
+    console.log(quantityP.innerText);
+    let productPrice = quantityP.parentElement.parentElement.querySelector("strong");
+    let productTotalPriceDiv = quantityP.parentElement.parentElement.querySelector(".product-line-price");
+
+    productTotalPriceDiv.innerText = (quantityP.innerText * productPrice.innerText).toFixed(2);
+    
+    calculateCartTotal();
 }
-buyDetail()
 
+const calculateCartTotal = () =>{
 
-let remove = () => {
-    let _remove = document.querySelectorAll(".remove-product")
-    _remove.forEach(e => {
-        e.addEventListener("click", () => {
-            e.parentElement.parentElement.parentElement.remove()
-            buyDetail()
-        })
-    })
+    let productTotalPriceDivs = document.querySelectorAll(".product-line-price");
+    // console.log(productTotalPriceDivs);
+    let subtotal = 0;
+    productTotalPriceDivs.forEach(eachProductTotalPriceDiv=>{
+        subtotal += parseFloat(eachProductTotalPriceDiv.innerText)
+    });
+    console.log(subtotal);
+    let taxPrice = subtotal * localStorage.getItem("taxRate");
+    console.log(taxPrice);
+    let shipping = (subtotal > 0 ? parseFloat(localStorage.getItem("shippingPrice")) :0);
+    console.log(shipping);
+    let cartTotal = subtotal + taxPrice + shipping;
+    console.log(cartTotal);
+
+    document.querySelector("#cart-subtotal p:nth-child(2)").innerText = subtotal.toFixed(2);
+    document.querySelector("#cart-tax p:nth-child(2)").innerText = taxPrice.toFixed(2);
+    document.querySelector("#cart-shipping p:nth-child(2)").innerText = shipping.toFixed(2);
+    document.querySelector("#cart-total").lastElementChild.innerText = cartTotal.toFixed(2);
 
 }
-remove()
-
